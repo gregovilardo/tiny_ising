@@ -130,7 +130,7 @@ int main(void) {
   double start = wtime();
 
   // clear the grid
-  int grid[L][L] = {{0}};
+  int(*grid)[L] = malloc(sizeof(int[L]) * L);
   init(grid);
 
   // temperature increasing cycle
@@ -147,6 +147,7 @@ int main(void) {
            stat[i].e4 / ((double)N * N * N * N), stat[i].m, stat[i].m2,
            stat[i].m4);
   }
+  free(grid);
 
   return 0;
 }
