@@ -124,13 +124,21 @@ int main(void) {
   printf("# Number of Points: %i\n", NPOINTS);
 
   // configure RNG
-  srand(SEED);
+  /* srand(SEED); */
 
   // start timer
   double start = wtime();
 
   // clear the grid
-  int grid[L][L] = {{0}};
+  /* int grid[L][L] = {{0}}; */
+  int(*grid)[L] = malloc((sizeof(int[L][L])));
+  if (!grid) {
+    {
+      fprintf(stderr, "Error, unable to allocate memory.\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
   init(grid);
 
   // temperature increasing cycle
@@ -140,13 +148,15 @@ int main(void) {
   double elapsed = wtime() - start;
   printf("# Total Simulation Time (sec): %lf\n", elapsed);
 
-  printf("# Temp\tE\tE^2\tE^4\tM\tM^2\tM^4\n");
+  printf("# Temp,E,E^2,E^4,M,M^2,M^4\n");
   for (unsigned int i = 0; i < NPOINTS; ++i) {
-    printf("%lf\t%.10lf\t%.10lf\t%.10lf\t%.10lf\t%.10lf\t%.10lf\n", stat[i].t,
+    printf("%lf,%.10lf,%.10lf,%.10lf,%.10lf,%.10lf,%.10lf\n", stat[i].t,
            stat[i].e / ((double)N), stat[i].e2 / ((double)N * N),
            stat[i].e4 / ((double)N * N * N * N), stat[i].m, stat[i].m2,
            stat[i].m4);
   }
+
+  free(grid);
 
   return 0;
 }

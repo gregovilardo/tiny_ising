@@ -1,5 +1,5 @@
 CC += 
-CFLAGS += -std=c11 -Wall -Wextra
+CFLAGS += -g -std=c11 -Wall -Wextra
 LDFLAGS=-lm
 GL_LDFLAGS=-lGL -lglfw
 
