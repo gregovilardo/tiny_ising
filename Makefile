@@ -1,10 +1,10 @@
-CC=gcc
+CC += 
 CFLAGS += -std=c11 -Wall -Wextra
 LDFLAGS=-lm
 GL_LDFLAGS=-lGL -lglfw
 
 # Files
-TARGETS=tiny_ising #demo
+TARGETS=tiny_ising demo
 
 # Rules
 all: $(TARGETS)
