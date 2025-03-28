@@ -1,0 +1,28 @@
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+./tiny_ising: Interrupt
+
+ Performance counter stats for './tiny_ising' (10 runs):
+
+            236.08 msec task-clock:u                     #    0.998 CPUs utilized               ( +- 15.41% )
+                 0      context-switches:u               #    0.000 /sec                      
+                 0      cpu-migrations:u                 #    0.000 /sec                      
+             4,170      page-faults:u                    #   17.663 K/sec                       ( +-  0.01% )
+     3,808,269,500      instructions:u                   #    3.94  insn per cycle            
+                                                  #    0.00  stalled cycles per insn     ( +- 16.04% )  (85.31%)
+       967,310,652      cycles:u                         #    4.097 GHz                         ( +- 15.96% )  (85.72%)
+         3,575,732      stalled-cycles-frontend:u        #    0.37% frontend cycles idle        ( +- 14.12% )  (85.86%)
+       327,029,807      branches:u                       #    1.385 G/sec                       ( +- 15.81% )  (85.86%)
+           645,687      branch-misses:u                  #    0.20% of all branches             ( +- 16.39% )  (85.85%)
+       831,355,628      L1-dcache-loads:u                #    3.521 G/sec                       ( +- 16.12% )  (85.86%)
+         3,968,445      L1-dcache-load-misses:u          #    0.48% of all L1-dcache accesses   ( +- 15.49% )  (85.53%)
+
+            0.2367 +- 0.0364 seconds time elapsed  ( +- 15.37% )
+

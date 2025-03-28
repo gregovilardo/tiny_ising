@@ -1,0 +1,18 @@
+
+ Performance counter stats for './tiny_ising' (10 runs):
+
+          7,800.61 msec task-clock:u                     #    0.998 CPUs utilized               ( +-  2.35% )
+                 0      context-switches:u               #    0.000 /sec                      
+                 0      cpu-migrations:u                 #    0.000 /sec                      
+               331      page-faults:u                    #   42.433 /sec                        ( +-  0.15% )
+    80,011,837,885      instructions:u                   #    2.65  insn per cycle            
+                                                  #    0.02  stalled cycles per insn     ( +-  0.01% )  (85.71%)
+    30,155,395,259      cycles:u                         #    3.866 GHz                         ( +-  0.72% )  (85.71%)
+     1,323,174,599      stalled-cycles-frontend:u        #    4.39% frontend cycles idle        ( +-  1.27% )  (85.71%)
+     8,550,206,979      branches:u                       #    1.096 G/sec                       ( +-  0.01% )  (85.72%)
+       262,687,107      branch-misses:u                  #    3.07% of all branches             ( +-  0.04% )  (85.72%)
+    26,298,316,388      L1-dcache-loads:u                #    3.371 G/sec                       ( +-  0.13% )  (85.72%)
+        92,085,313      L1-dcache-load-misses:u          #    0.35% of all L1-dcache accesses   ( +-  0.88% )  (85.71%)
+
+             7.818 +- 0.188 seconds time elapsed  ( +-  2.41% )
+

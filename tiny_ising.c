@@ -37,6 +37,9 @@ struct statpoint {
   double m4;
 };
 
+double duration = 0;
+double nupdates = 0;
+
 static void cycle(int grid[L][L], const double min, const double max,
                   const double step, const unsigned int calc_step,
                   struct statpoint stats[]) {
@@ -49,14 +52,20 @@ static void cycle(int grid[L][L], const double min, const double max,
 
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
+      double start = wtime();
       update(temp, grid);
+      duration += wtime() - start;
+      nupdates++;
     }
 
     // measurement phase
     unsigned int measurements = 0;
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
+      double start = wtime();
       update(temp, grid);
+      nupdates++;
+      duration += wtime() - start;
       if (j % calc_step == 0) {
         double energy = 0.0, mag = 0.0;
         int M_max = 0;
@@ -155,7 +164,14 @@ int main(void) {
            stat[i].e4 / ((double)N * N * N * N), stat[i].m, stat[i].m2,
            stat[i].m4);
   }
+  printf("=====================\n");
+  float cells_ns = (L * L * nupdates) / (duration * 1e9);
+  printf("cells/ns %f\n", cells_ns);
 
+  FILE *fptr;
+  fptr = fopen("out", "a");
+  fprintf(fptr, "%f\n", cells_ns);
+  fclose(fptr);
   free(grid);
 
   return 0;
