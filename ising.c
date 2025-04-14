@@ -6,7 +6,7 @@
 
 #include "xoshiro256plus.h"
 
-#define L_mask (L-1)
+#define L_mask (L - 1)
 
 static float exp_table[32];
 
@@ -29,18 +29,19 @@ void update(const float temp, int grid[L][L]) {
     last_temp = temp;
   }
   // typewriter update
-  for (unsigned int i = 0; i < L; ++i) {
-    for (unsigned int j = 0; j < L; ++j) {
+  for (unsigned int i = 1; i < L - 1; ++i) {
+    for (unsigned int j = 1; j < L - 1; ++j) {
       int spin_old = grid[i][j];
       int spin_new = (-1) * spin_old;
 
       // computing h_before
-      int spin_neigh_n = grid[(i + L - 1) & L_mask][j];
-      int spin_neigh_e = grid[i][(j + 1) & L_mask];
-      int spin_neigh_w = grid[i][(j + L - 1) & L_mask];
-      int spin_neigh_s = grid[(i + 1) & L_mask][j];
-      int sum_neighbors = spin_neigh_n + spin_neigh_e + spin_neigh_w + spin_neigh_s;
-      int delta_E = 2 * spin_old * sum_neighbors; 
+      int spin_neigh_n = grid[(i - 1)][j];
+      int spin_neigh_e = grid[i][(j + 1)];
+      int spin_neigh_w = grid[i][(j - 1)];
+      int spin_neigh_s = grid[i + 1][j];
+      int sum_neighbors =
+          spin_neigh_n + spin_neigh_e + spin_neigh_w + spin_neigh_s;
+      int delta_E = 2 * spin_old * sum_neighbors;
 
       float p = optimized_random_probability();
       if (delta_E <= 0 || p <= exp_table[-delta_E + 8]) {
@@ -52,13 +53,14 @@ void update(const float temp, int grid[L][L]) {
 
 double calculate(int grid[L][L], int *M_max) {
   int E = 0;
-  for (unsigned int i = 0; i < L; ++i) {
-    for (unsigned int j = 0; j < L; ++j) {
+  for (unsigned int i = 1; i < L - 1; ++i) {
+    for (unsigned int j = 1; j < L - 1; ++j) {
       int spin = grid[i][j];
-      int spin_neigh_n = grid[(i + 1) & L_mask][j];
-      int spin_neigh_e = grid[i][(j + 1) & L_mask];
-      int spin_neigh_w = grid[i][(j + L - 1) & L_mask];
-      int spin_neigh_s = grid[(i + L - 1) & L_mask][j];
+
+      int spin_neigh_n = grid[(i - 1)][j];
+      int spin_neigh_e = grid[i][(j + 1)];
+      int spin_neigh_w = grid[i][(j - 1)];
+      int spin_neigh_s = grid[i + 1][j];
 
       E += (spin * spin_neigh_n) + (spin * spin_neigh_e) +
            (spin * spin_neigh_w) + (spin * spin_neigh_s);
