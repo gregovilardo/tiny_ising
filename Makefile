@@ -1,5 +1,5 @@
 CC += 
-CFLAGS += -g -std=gnu11 -Wall -Wextra -fopenmp
+CFLAGS += -std=gnu11 -Wall -Wextra -fopenmp
 LDFLAGS=-lm
 GL_LDFLAGS=-lGL -lglfw
 
