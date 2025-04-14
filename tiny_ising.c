@@ -12,6 +12,7 @@
 #include "ising.h"
 #include "params.h"
 #include "wtime.h"
+#include <omp.h>
 
 #include "xoshiro256plus.h"
 #include <assert.h>
@@ -41,30 +42,6 @@ struct statpoint {
 
 /* double duration = 0; */
 /* double nupdates = 0; */
-#ifdef __RDNA3__
-#define RTC_TICKS (1.0 / 100000000.0) /* 100MHz */
-#else
-#define RTC_TICKS (1.0 / 27000000.0) /* 27MHz */
-#endif
-#ifdef __RDNA3__
-#define RTC_TICKS (1.0 / 100000000.0) /* 100MHz */
-#else
-#define RTC_TICKS (1.0 / 27000000.0) /* 27MHz */
-#endif
-
-double omp_get_wtime(void) {
-  uint64_t clock;
-#ifdef __RDNA3__
-  asm("s_sendmsg_rtn_b64 %0 0x83 ;Get REALTIME\n\t"
-      "s_waitcnt 0"
-      : "=r"(clock));
-#else
-  asm("s_memrealtime %0\n\t"
-      "s_waitcnt 0"
-      : "=r"(clock));
-#endif
-  return clock * RTC_TICKS;
-}
 
 static void cycle(int grid[L][L], const double min, const double max,
                   const double step, const unsigned int calc_step,
@@ -163,6 +140,7 @@ int main(void) {
 
   // start timer
   double start = omp_get_wtime();
+  printf("start %f", start);
 
   // clear the grid
   /* int grid[L][L] = {{0}}; */
