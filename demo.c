@@ -14,6 +14,7 @@
 #include "ising.h"
 #include "params.h"
 #include "wtime.h"
+#include "xoshiro256plus.h"
 
 #include <assert.h>
 #include <limits.h> // UINT_MAX
@@ -23,8 +24,8 @@
 #include <time.h> // time()
 
 #define MAXFPS 60
-#define N (L * L)         // system size
-#define SEED (time(NULL)) // random seed
+#define N (L * L)   // system size
+#define SEED 0xC4FE //(time(NULL)) // random seed
 
 /**
  * GL output
@@ -102,7 +103,7 @@ int main(void) {
   printf("# Measurement Time: %i\n", TMAX);
 
   // configure RNG
-  srand(SEED);
+  seed(SEED);
 
   gl2d_t gl2d = gl2d_init("tiny_ising", L, L);
 
@@ -124,3 +125,4 @@ int main(void) {
 
   return 0;
 }
+
