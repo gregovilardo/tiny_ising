@@ -16,7 +16,7 @@ demo: demo.o ising.o wtime.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(GL_LDFLAGS)
 
 clean:
-	rm -f $(TARGETS) *.o
+	rm -f $(TARGETS) *.o *.s *.i *.bc
 
 .PHONY: clean all
 
