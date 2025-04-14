@@ -13,9 +13,11 @@
 #include "params.h"
 #include "wtime.h"
 
+#include "xoshiro256plus.h"
 #include <assert.h>
 #include <limits.h> // UINT_MAX
 #include <math.h>   // expf()
+#include <stdint.h> // rand()
 #include <stdio.h>  // printf()
 #include <stdlib.h> // rand()
 #include <time.h>   // time()
@@ -25,7 +27,7 @@
 #define NPOINTS (1 + (int)((TEMP_FINAL - TEMP_INITIAL) / TEMP_DELTA))
 #define N (L * L) // system size
 /* #define SEED (time(NULL)) // random seed */
-#define SEED (1) // random seed
+#define SEED 0xC4FE //(time(NULL)) // random seed
 // temperature, E, E^2, E^4, M, M^2, M^4
 struct statpoint {
   double t;
@@ -39,6 +41,30 @@ struct statpoint {
 
 /* double duration = 0; */
 /* double nupdates = 0; */
+#ifdef __RDNA3__
+#define RTC_TICKS (1.0 / 100000000.0) /* 100MHz */
+#else
+#define RTC_TICKS (1.0 / 27000000.0) /* 27MHz */
+#endif
+#ifdef __RDNA3__
+#define RTC_TICKS (1.0 / 100000000.0) /* 100MHz */
+#else
+#define RTC_TICKS (1.0 / 27000000.0) /* 27MHz */
+#endif
+
+double omp_get_wtime(void) {
+  uint64_t clock;
+#ifdef __RDNA3__
+  asm("s_sendmsg_rtn_b64 %0 0x83 ;Get REALTIME\n\t"
+      "s_waitcnt 0"
+      : "=r"(clock));
+#else
+  asm("s_memrealtime %0\n\t"
+      "s_waitcnt 0"
+      : "=r"(clock));
+#endif
+  return clock * RTC_TICKS;
+}
 
 static void cycle(int grid[L][L], const double min, const double max,
                   const double step, const unsigned int calc_step,
@@ -62,7 +88,7 @@ static void cycle(int grid[L][L], const double min, const double max,
     unsigned int measurements = 0;
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
-      double start = wtime();
+      /* double start = wtime(); */
       update(temp, grid);
       /* nupdates++; */
       /* duration += wtime() - start; */
@@ -133,10 +159,10 @@ int main(void) {
   printf("# Number of Points: %i\n", NPOINTS);
 
   // configure RNG
-  /* srand(SEED); */
+  seed(SEED);
 
   // start timer
-  double start = wtime();
+  double start = omp_get_wtime();
 
   // clear the grid
   /* int grid[L][L] = {{0}}; */
@@ -154,7 +180,7 @@ int main(void) {
   cycle(grid, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, DELTA_T, stat);
 
   // stop timer
-  double elapsed = wtime() - start;
+  double elapsed = omp_get_wtime() - start;
   printf("# Total Simulation Time (sec): %lf\n", elapsed);
 
   printf("# Temp,E,E^2,E^4,M,M^2,M^4\n");
@@ -165,12 +191,12 @@ int main(void) {
            stat[i].m4);
   }
   printf("=====================\n");
-  float cells_ns = N / (elapsed * 1000);
-  printf("cells/ns %f\n", cells_ns);
+  float spins_ms = N / (elapsed * 1000);
+  printf("# Spins/ms: %lf\n", spins_ms);
 
   FILE *fptr;
   fptr = fopen("out", "a");
-  fprintf(fptr, "%f\n", cells_ns);
+  fprintf(fptr, "%f\n", spins_ms);
   fclose(fptr);
   free(grid);
 

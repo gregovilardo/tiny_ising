@@ -4,11 +4,28 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define XOR32_MAX 4294967296.0f;
+#include "xoshiro256plus.h"
+
+static float exp_table[32];
+
+static void init_exp_table(float temp) {
+  exp_table[(-8) + 8] = expf(-8 / temp);
+  exp_table[(-4) + 8] = expf(-4 / temp);
+  exp_table[(-2) + 8] = expf(-2 / temp);
+  exp_table[(0) + 8] = expf(0 / temp);
+  exp_table[(2) + 8] = expf(2 / temp);
+  exp_table[(4) + 8] = expf(4 / temp);
+  exp_table[(8) + 8] = expf(8 / temp);
+}
 
 void update(const float temp, int grid[L][L]) {
-  static uint32_t prng_state = 123456789; // Initial seed
-  const float d = 1.0f / XOR32_MAX;
+
+  static float last_temp = -999.0;
+
+  if (temp != last_temp) {
+    init_exp_table(temp);
+    last_temp = temp;
+  }
   // typewriter update
   for (unsigned int i = 0; i < L; ++i) {
     for (unsigned int j = 0; j < L; ++j) {
@@ -29,14 +46,8 @@ void update(const float temp, int grid[L][L]) {
 
       int delta_E = h_after - h_before;
 
-      uint32_t x = prng_state;
-      x ^= x << 13;
-      x ^= x >> 17;
-      x ^= x << 5;
-      prng_state = x;
-
-      float p = (float)x * d;
-      if (delta_E <= 0 || p <= expf(-delta_E / temp)) {
+      float p = optimized_random_probability();
+      if (delta_E <= 0 || p <= exp_table[-delta_E + 8]) {
         grid[i][j] = spin_new;
       }
     }
