@@ -22,6 +22,7 @@
 #include <stdlib.h> // rand()
 #include <string.h>
 #include <time.h> // time()
+#include <unistd.h>
 
 #define MAXFPS 60
 #define N (L * L)   // system size
@@ -56,6 +57,7 @@ static void draw(gl2d_t gl2d, float t_now, float t_min, float t_max,
     gl2d_draw_rgbf(gl2d, 0, i, L, 1, row);
   }
   gl2d_display(gl2d);
+  usleep(5000000);
 }
 
 static void cycle(gl2d_t gl2d, const double initial, const double final,
@@ -80,12 +82,14 @@ static void cycle(gl2d_t gl2d, const double initial, const double final,
             }
           } else {
             if (j % 2 == 0) {
-              grid[i][j] = black[i + 1][j];
+              grid[i][j] = black[i][j];
             } else {
-              grid[i][j] = red[i + 1][j];
+              grid[i][j] = red[i][j];
             }
           }
+          printf("%d ", grid[i][j]);
         }
+        printf("\n");
       }
 
       draw(gl2d, temp, initial < final ? initial : final,

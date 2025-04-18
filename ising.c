@@ -74,8 +74,8 @@ void update(const float temp, int (*red)[L], int (*black)[L]) {
       // Es decir la operacion modulo ya me deja en la fila correcta para
       // poder levantarlos consecutivamente
       __m256i N = _mm256_loadu_si256((__m256i *)&ptr_n[j]);
-      __m256i M = _mm256_loadu_si256((__m256i *)&ptr_s[j]);
-      __m256i S = _mm256_loadu_si256((__m256i *)&ptr[j]);
+      __m256i M = _mm256_loadu_si256((__m256i *)&ptr[j]);
+      __m256i S = _mm256_loadu_si256((__m256i *)&ptr_s[j]);
 
       /* __m256i N = _mm256_i32gather_epi32(ptr_n, idx_vec, sizeof(int)); */
       /* __m256i M = _mm256_i32gather_epi32(ptr, idx_vec, sizeof(int)); */
@@ -99,7 +99,9 @@ void update(const float temp, int (*red)[L], int (*black)[L]) {
       __m256i delta_E = _mm256_mullo_epi32(two, prod);
 
       //[0xF, 0, ...] 0xF si delta_E <= 0
-      __m256i mask_delta_LE_neg = _mm256_cmpgt_epi32(zero, delta_E);
+      __m256i mask_GT = _mm256_cmpgt_epi32(zero, delta_E); // zero > delta_E
+      __m256i mask_EQ = _mm256_cmpeq_epi32(zero, delta_E); // zero == delta_E
+      __m256i mask_delta_LE_neg = _mm256_or_si256(mask_GT, mask_EQ);
 
       __m256i neg_delta_E = _mm256_sub_epi32(zero, delta_E);
       __m256i neg_delta_E_plus_8 = _mm256_add_epi32(neg_delta_E, eight);
@@ -141,8 +143,8 @@ void update(const float temp, int (*red)[L], int (*black)[L]) {
       int *ptr_n = &red[(i + Ldiv - 1) % Ldiv][0];
 
       __m256i N = _mm256_loadu_si256((__m256i *)&ptr_n[j]);
-      __m256i M = _mm256_loadu_si256((__m256i *)&ptr_s[j]);
-      __m256i S = _mm256_loadu_si256((__m256i *)&ptr[j]);
+      __m256i M = _mm256_loadu_si256((__m256i *)&ptr[j]);
+      __m256i S = _mm256_loadu_si256((__m256i *)&ptr_s[j]);
 
       // Aca la mascara es al revez que en el otro loop
       __m256i n_vals = _mm256_blend_epi32(N, M, 0xAA);
@@ -157,7 +159,9 @@ void update(const float temp, int (*red)[L], int (*black)[L]) {
       __m256i prod = _mm256_mullo_epi32(spin_old, sum);
       __m256i delta_E = _mm256_mullo_epi32(two, prod);
 
-      __m256i mask_delta_LE_neg = _mm256_cmpgt_epi32(zero, delta_E);
+      __m256i mask_GT = _mm256_cmpgt_epi32(zero, delta_E); // zero > delta_E
+      __m256i mask_EQ = _mm256_cmpeq_epi32(zero, delta_E); // zero == delta_E
+      __m256i mask_delta_LE_neg = _mm256_or_si256(mask_GT, mask_EQ);
 
       __m256i neg_delta_E = _mm256_sub_epi32(zero, delta_E);
       __m256i neg_delta_E_plus_8 = _mm256_add_epi32(neg_delta_E, eight);
@@ -198,8 +202,8 @@ double calculate(int (*red)[L], int (*black)[L], int *M_max) {
       int *ptr_n = &red[(i + Ldiv - 1) % Ldiv][0];
 
       __m256i N = _mm256_loadu_si256((__m256i *)&ptr_n[j]);
-      __m256i M = _mm256_loadu_si256((__m256i *)&ptr_s[j]);
-      __m256i S = _mm256_loadu_si256((__m256i *)&ptr[j]);
+      __m256i M = _mm256_loadu_si256((__m256i *)&ptr[j]);
+      __m256i S = _mm256_loadu_si256((__m256i *)&ptr_s[j]);
 
       // Aca la mascara es al revez que en el otro loop
       __m256i n_vals = _mm256_blend_epi32(N, M, 0xAA);
@@ -255,7 +259,7 @@ double calculate(int (*red)[L], int (*black)[L], int *M_max) {
   }
 
   E = sum_avx2_fast(E_vec);
-  M_max += sum_avx2_fast(M_max_vec);
+  *M_max += sum_avx2_fast(M_max_vec);
 
   return -((double)E / 2.0);
 }

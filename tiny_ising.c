@@ -140,7 +140,6 @@ int main(void) {
 
   // start timer
   double start = omp_get_wtime();
-  printf("start %f", start);
   int(*grid)[L] = malloc(sizeof(int[L]) * L);
   int(*red)[L] = malloc(sizeof(int[L]) * L / 2);
   int(*black)[L] = malloc(sizeof(int[L]) * L / 2);
