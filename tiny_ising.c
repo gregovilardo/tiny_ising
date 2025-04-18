@@ -43,9 +43,9 @@ struct statpoint {
 /* double duration = 0; */
 /* double nupdates = 0; */
 
-static void cycle(int grid[L][L], const double min, const double max,
-                  const double step, const unsigned int calc_step,
-                  struct statpoint stats[]) {
+static void cycle(int red[L / 2][L], int black[L / 2][L], const double min,
+                  const double max, const double step,
+                  const unsigned int calc_step, struct statpoint stats[]) {
 
   assert((0 < step && min <= max) || (step < 0 && max <= min));
   int modifier = (0 < step) ? 1 : -1;
@@ -56,7 +56,7 @@ static void cycle(int grid[L][L], const double min, const double max,
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
       /* double start = wtime(); */
-      update(temp, grid);
+      update(temp, red, black);
       /* duration += wtime() - start; */
       /* nupdates++; */
     }
@@ -66,13 +66,13 @@ static void cycle(int grid[L][L], const double min, const double max,
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
       /* double start = wtime(); */
-      update(temp, grid);
+      update(temp, red, black);
       /* nupdates++; */
       /* duration += wtime() - start; */
       if (j % calc_step == 0) {
         double energy = 0.0, mag = 0.0;
         int M_max = 0;
-        energy = calculate(grid, &M_max);
+        energy = calculate(red, black, &M_max);
         mag = abs(M_max) / (float)N;
         e += energy;
         e2 += energy * energy;
@@ -142,20 +142,48 @@ int main(void) {
   double start = omp_get_wtime();
   printf("start %f", start);
 
-  // clear the grid
-  /* int grid[L][L] = {{0}}; */
-  int(*grid)[L] = malloc((sizeof(int[L][L])));
-  if (!grid) {
-    {
-      fprintf(stderr, "Error, unable to allocate memory.\n");
-      exit(EXIT_FAILURE);
+  int grid[L][L] = {{0}};
+  int black[L / 2][L];
+  int red[L / 2][L];
+  init(grid);
+
+  /* int **restrict red = (int **)malloc((L / 2) * sizeof(int *)); */
+  /* int **restrict black = (int **)malloc((L / 2) * sizeof(int *)); */
+  /* int *red_data = (int *)malloc(L * (L / 2) * sizeof(int)); */
+  /* int *black_data = (int *)malloc(L * (L / 2) * sizeof(int)); */
+  /**/
+  /* for (int i = 0; i < L / 2; i++) { */
+  /*   red[i] = &(red_data[i * L]); */
+  /*   black[i] = &(black_data[i * L]); */
+  /* } */
+  /**/
+  /* for (int i = 0; i < L / 2; i++) { */
+  /*   for (int j = 0; j < L; j++) { */
+  /*     red[i][j] = 1; */
+  /*     black[i][j] = 1; */
+  /*   } */
+  /* } */
+
+  for (unsigned int i = 0; i < L; ++i) {
+    for (unsigned int j = 0; j < L; j++) {
+      if (i % 2 == 0) {
+        if (j % 2 == 0) {
+          red[i / 2][j] = grid[i][j];
+        } else {
+          black[i / 2][j] = grid[i][j];
+        }
+      } else {
+        if (j % 2 == 0) {
+          black[i / 2][j] = grid[i][j];
+        } else {
+          red[i / 2][j] = grid[i][j];
+        }
+      }
     }
   }
 
-  init(grid);
-
   // temperature increasing cycle
-  cycle(grid, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, DELTA_T, stat);
+  cycle(red, black, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, DELTA_T, stat);
 
   // stop timer
   double elapsed = omp_get_wtime() - start;
@@ -176,7 +204,6 @@ int main(void) {
   fptr = fopen("out", "a");
   fprintf(fptr, "%f\n", spins_ms);
   fclose(fptr);
-  free(grid);
 
   return 0;
 }

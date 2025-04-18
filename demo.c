@@ -59,7 +59,7 @@ static void draw(gl2d_t gl2d, float t_now, float t_min, float t_max,
 }
 
 static void cycle(gl2d_t gl2d, const double initial, const double final,
-                  const double step, int grid[L][L]) {
+                  const double step, int red[L / 2][L], int black[L / 2][L]) {
   assert((0 < step && initial <= final) || (step < 0 && final <= initial));
   int modifier = (0 < step) ? 1 : -1;
 
@@ -67,7 +67,27 @@ static void cycle(gl2d_t gl2d, const double initial, const double final,
        temp += step) {
     printf("Temp: %f\n", temp);
     for (unsigned int j = 0; j < TRAN + TMAX; ++j) {
-      update(temp, grid);
+      update(temp, red, black);
+      int grid[L][L];
+
+      for (unsigned int i = 0; i < L; ++i) {
+        for (unsigned int j = 0; j < L; j++) {
+          if (i % 2 == 0) {
+            if (j % 2 == 0) {
+              grid[i][j] = red[i][j];
+            } else {
+              grid[i][j] = black[i][j];
+            }
+          } else {
+            if (j % 2 == 0) {
+              grid[i][j] = black[i + 1][j];
+            } else {
+              grid[i][j] = red[i + 1][j];
+            }
+          }
+        }
+      }
+
       draw(gl2d, temp, initial < final ? initial : final,
            initial < final ? final : initial, grid);
     }
@@ -112,10 +132,30 @@ int main(void) {
 
   // clear the grid
   int grid[L][L] = {{0}};
+  int red[L / 2][L];
+  int black[L / 2][L];
   init(grid);
 
+  for (unsigned int i = 0; i < L; ++i) {
+    for (unsigned int j = 0; j < L; j++) {
+      if (i % 2 == 0) {
+        if (j % 2 == 0) {
+          red[i / 2][j] = grid[i][j];
+        } else {
+          black[i / 2][j] = grid[i][j];
+        }
+      } else {
+        if (j % 2 == 0) {
+          black[i / 2][j] = grid[i][j];
+        } else {
+          red[i / 2][j] = grid[i][j];
+        }
+      }
+    }
+  }
+
   // temperature increasing cycle
-  cycle(gl2d, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, grid);
+  cycle(gl2d, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, red, black);
 
   // stop timer
   double elapsed = wtime() - start;
@@ -125,4 +165,3 @@ int main(void) {
 
   return 0;
 }
-
