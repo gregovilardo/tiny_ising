@@ -57,7 +57,7 @@ static void draw(gl2d_t gl2d, float t_now, float t_min, float t_max,
     gl2d_draw_rgbf(gl2d, 0, i, L, 1, row);
   }
   gl2d_display(gl2d);
-  usleep(5000000);
+  /* usleep(5000000); */
 }
 
 static void cycle(gl2d_t gl2d, const double initial, const double final,
@@ -73,24 +73,17 @@ static void cycle(gl2d_t gl2d, const double initial, const double final,
       int grid[L][L];
 
       for (unsigned int i = 0; i < L; ++i) {
-        for (unsigned int j = 0; j < L; j++) {
-          if (i % 2 == 0) {
-            if (j % 2 == 0) {
-              grid[i][j] = red[i][j];
-            } else {
-              grid[i][j] = black[i][j];
-            }
+        for (unsigned int j = 0; j < L; ++j) {
+          if ((i + j) % 2 == 0) {
+            grid[i][j] = red[i / 2][j];
           } else {
-            if (j % 2 == 0) {
-              grid[i][j] = black[i][j];
-            } else {
-              grid[i][j] = red[i][j];
-            }
+            grid[i][j] = black[i / 2][j];
           }
-          printf("%d ", grid[i][j]);
+          /* grid[i][j] == -1 ? printf("0") : printf("X"); */
         }
-        printf("\n");
+        /* printf("\n"); */
       }
+      /* printf("\n\n\n"); */
 
       draw(gl2d, temp, initial < final ? initial : final,
            initial < final ? final : initial, grid);
@@ -142,18 +135,10 @@ int main(void) {
 
   for (unsigned int i = 0; i < L; ++i) {
     for (unsigned int j = 0; j < L; j++) {
-      if (i % 2 == 0) {
-        if (j % 2 == 0) {
-          red[i / 2][j] = grid[i][j];
-        } else {
-          black[i / 2][j] = grid[i][j];
-        }
+      if ((i + j) % 2 == 0) {
+        red[i / 2][j] = grid[i][j];
       } else {
-        if (j % 2 == 0) {
-          black[i / 2][j] = grid[i][j];
-        } else {
-          red[i / 2][j] = grid[i][j];
-        }
+        black[i / 2][j] = grid[i][j];
       }
     }
   }

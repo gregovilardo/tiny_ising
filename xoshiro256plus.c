@@ -15,6 +15,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <immintrin.h>
 #include <stdint.h>
 
 /* This is xoshiro256+ 1.0, our best and fastest generator for floating-point
@@ -56,7 +57,7 @@ uint64_t next(void) {
 }
 
 // Function to generate a floating-point number in [0,1)
-double optimized_random_probability(void) { return (next() >> 11) * 0x1.0p-53; }
+float optimized_random_probability(void) { return (next() >> 40) * 0x1.0p-24; }
 
 void seed(uint64_t seed) {
   for (int i = 0; i < 4; i++) {

@@ -1,0 +1,4 @@
+demo.o
+ising.o
+wtime.o
+xoshiro256plus.o

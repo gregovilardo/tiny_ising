@@ -1,0 +1,6 @@
+-fresolution=demo.res
+-flinker-output=exec
+demo.o
+ising.o
+wtime.o
+xoshiro256plus.o
