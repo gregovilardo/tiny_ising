@@ -30,7 +30,7 @@ int32_t sum_avx2_fast(__m256i vec) {
   return _mm_extract_epi32(sum128, 0) + _mm_extract_epi32(sum128, 1);
 }
 
-void update(const float temp, int red[L / 2][L], int black[L / 2][L]) {
+void update(const float temp, int (*red)[L], int (*black)[L]) {
   static float last_temp = -999.0;
   if (temp != last_temp) {
     init_exp_table(temp);
@@ -173,7 +173,8 @@ void update(const float temp, int red[L / 2][L], int black[L / 2][L]) {
     }
   }
 }
-double calculate(int red[L / 2][L], int black[L / 2][L], int *M_max) {
+
+double calculate(int (*red)[L], int (*black)[L], int *M_max) {
   int E = 0;
   __m256i E_vec = _mm256_setzero_si256();
   __m256i M_max_vec = _mm256_setzero_si256();
