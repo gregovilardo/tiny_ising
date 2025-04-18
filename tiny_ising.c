@@ -43,7 +43,7 @@ struct statpoint {
 /* double duration = 0; */
 /* double nupdates = 0; */
 
-static void cycle(int red[L / 2][L], int black[L / 2][L], const double min,
+static void cycle(int (*red)[L], int (*black)[L], const double min,
                   const double max, const double step,
                   const unsigned int calc_step, struct statpoint stats[]) {
 
@@ -141,10 +141,10 @@ int main(void) {
   // start timer
   double start = omp_get_wtime();
   printf("start %f", start);
+  int(*grid)[L] = malloc(sizeof(int[L]) * L);
+  int(*red)[L] = malloc(sizeof(int[L]) * L / 2);
+  int(*black)[L] = malloc(sizeof(int[L]) * L / 2);
 
-  int grid[L][L] = {{0}};
-  int black[L / 2][L];
-  int red[L / 2][L];
   init(grid);
 
   /* int **restrict red = (int **)malloc((L / 2) * sizeof(int *)); */
@@ -204,6 +204,7 @@ int main(void) {
   fptr = fopen("out", "a");
   fprintf(fptr, "%f\n", spins_ms);
   fclose(fptr);
+  free(grid);
 
   return 0;
 }
