@@ -144,10 +144,6 @@ int main(void) {
   int *black_grid;
   int *red_grid;
 
-  size_t pitch_black;
-  size_t pitch_red;
-
-
   cudaMallocManaged(&black_grid, ROWS * COLS * sizeof(int));
   cudaMallocManaged(&red_grid, ROWS * COLS * sizeof(int));
 

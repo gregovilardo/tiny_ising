@@ -15,6 +15,21 @@
 
 static float exp_table[NPOINTS][24];
 
+__m256 _mm256_exp_ps(__m256 x) {
+    // Extract each float into an array
+    float elements[8];
+    _mm256_storeu_ps(elements, x);
+
+    // Compute expf for each element
+    float results[8];
+    for (int i = 0; i < 8; ++i) {
+        results[i] = expf(elements[i]);
+    }
+
+    // Load results back into __m256
+    return _mm256_loadu_ps(results);
+}
+
 void init_exp_table() {
   int modifier = (0.0f < TEMP_DELTA) ? 1 : -1;
   size_t index = 0;
