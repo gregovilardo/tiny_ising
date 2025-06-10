@@ -1,4 +1,6 @@
 #include <stdint.h>
+#include <immintrin.h>
 
-float optimized_random_probability(void);
+__m256 optimized_random_probability(size_t tid);
+
 void seed(uint64_t seed);

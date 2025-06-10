@@ -1,19 +1,19 @@
 #pragma once
 
 #ifndef L
-#define L 384 // linear system size
+#define L 512 // linear system size
 #endif
 
 #ifndef TEMP_INITIAL
-#define TEMP_INITIAL 1.5 // initial temperature
+#define TEMP_INITIAL 1.5f // initial temperature
 #endif
 
 #ifndef TEMP_FINAL
-#define TEMP_FINAL 3.0 // final temperature
+#define TEMP_FINAL 3.0f // final temperature
 #endif
 
 #ifndef TEMP_DELTA
-#define TEMP_DELTA 0.01 // temperature step
+#define TEMP_DELTA 0.01f // temperature step
 #endif
 
 #ifndef TRAN
