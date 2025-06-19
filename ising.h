@@ -1,4 +1,4 @@
 #include "params.h"
 
-void update(const float temp, int grid[L][L]);
-double calculate(int grid[L][L], int *M_max);
+void update(const float temp, int *d_grid, size_t pitch);
+double calculate(int *d_grid, size_t pitch, int *M_max);
