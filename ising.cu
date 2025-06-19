@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-inline int get_value(int *d_grid, size_t pitch, int i, int j) {
+__device__ inline int get_value(int *d_grid, size_t pitch, int i, int j) {
   return *((int *)((char *)d_grid + i * pitch) + j);
 }
 
@@ -37,7 +37,7 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
   }
 }
 
-__global__ void calculate(int *d_grid, size_t pitch, int *M_max, int *E) {
+__global__ void calculate(int *d_grid, size_t pitch, int *M_max, double *E) {
   *E = 0;
   int i = threadIdx.x;
   // for (unsigned int i = 0; i < L; ++i) {

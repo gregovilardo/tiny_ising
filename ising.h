@@ -4,4 +4,4 @@
 #include "params.h"
 
 __global__ void update(const float temp, int *d_grid, size_t pitch);
-__global__ void calculate(int *d_grid, size_t pitch, int *M_max, int *E);
+__global__ void calculate(int *d_grid, size_t pitch, int *M_max, double *E);

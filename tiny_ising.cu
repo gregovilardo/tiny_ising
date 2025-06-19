@@ -62,7 +62,7 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
       if (j % calc_step == 0) {
         double energy = 0.0, mag = 0.0;
         int M_max = 0;
-        calculate<<<1, 1024>>>(d_grid, pitch, &M_max, energy);
+        calculate<<<1, 1024>>>(d_grid, pitch, &M_max, &energy);
         mag = abs(M_max) / (float)N;
         e += energy;
         e2 += energy * energy;
