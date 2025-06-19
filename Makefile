@@ -10,10 +10,10 @@ TARGETS = tiny_ising demo
 # Rules
 all: $(TARGETS)
 
-tiny_ising: tiny_ising.cu ising.cu xoshiro256plus.cu wtime.cu
+tiny_ising: tiny_ising.cu ising.cu  wtime.cu
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-demo: demo.cu ising.cu xoshiro256plus.cu wtime.cu
+demo: demo.cu ising.cu wtime.cu
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(GL_LDFLAGS)
 
 clean:

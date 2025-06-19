@@ -37,8 +37,8 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
   }
 }
 
-double calculate(int *d_grid, size_t pitch, int *M_max) {
-  int E = 0;
+__global__ void calculate(int *d_grid, size_t pitch, int *M_max, int *E) {
+  *E = 0;
   int i = threadIdx.x;
   // for (unsigned int i = 0; i < L; ++i) {
   for (unsigned int j = 0; j < L; ++j) {
@@ -48,8 +48,8 @@ double calculate(int *d_grid, size_t pitch, int *M_max) {
     int spin_w = get_value(d_grid, pitch, i, (j + L - 1) % L);
     int spin_s = get_value(d_grid, pitch, (i + 1) % L, j);
 
-    E += (spin * spin_n) + (spin * spin_e) + (spin * spin_w) + (spin * spin_s);
+    *E += (spin * spin_n) + (spin * spin_e) + (spin * spin_w) + (spin * spin_s);
     *M_max += spin;
   }
-  return -((double)E / 2.0);
+  *E = *E / 2.0;
 }
