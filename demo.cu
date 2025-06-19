@@ -9,6 +9,9 @@
  * Debugging: Ezequiel Ferrero
  */
 
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 #include "colormap.h"
 #include "gl2d.h"
 #include "ising.h"
@@ -68,7 +71,7 @@ static void cycle(gl2d_t gl2d, const double initial, const double final,
        temp += step) {
     printf("Temp: %f\n", temp);
     for (unsigned int j = 0; j < TRAN + TMAX; ++j) {
-      update(temp, d_grid, pitch);
+      update<<<1, 1024>>>(temp, d_grid, pitch);
       draw(gl2d, temp, initial < final ? initial : final,
            initial < final ? final : initial, d_grid, pitch);
     }

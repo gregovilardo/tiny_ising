@@ -8,6 +8,8 @@
  *
  * Debugging: Ezequiel Ferrero
  */
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
 #include "ising.h"
 #include "params.h"
@@ -49,18 +51,18 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
 
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
-      update(temp, grid);
+      update<<<1, 1024>>>(temp, d_grid, pitch);
     }
 
     // measurement phase
     unsigned int measurements = 0;
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
-      update(temp, grid);
+      update<<<1, 1024>>>(temp, d_grid, pitch);
       if (j % calc_step == 0) {
         double energy = 0.0, mag = 0.0;
         int M_max = 0;
-        energy = calculate(grid, &M_max);
+        energy = calculate<<<1, 1024>>>(d_grid, pitch, &M_max);
         mag = abs(M_max) / (float)N;
         e += energy;
         e2 += energy * energy;
