@@ -143,7 +143,7 @@ int main(void) {
   // T* pElement = (T*)((char*)BaseAddress + Row * pitch) + Column;
 
   // 2. Initialize to 0 (optional)
-  cudaMemset2D(d_grid, pitch, 0, L * sizeof(int), L);
+  cudaMemset2D(d_grid, pitch, 1, L * sizeof(int), L);
   // init(grid);
 
   // dim3 blocks(1, 1);

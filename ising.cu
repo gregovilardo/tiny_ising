@@ -10,7 +10,7 @@ __device__ inline int get_value(int *d_grid, size_t pitch, int i, int j) {
 
 __device__ unsigned int xor128() {
   // unsigned int x = seed + blockIdx.x * 123456789 + threadIdx.x * 987654321;
-  unsigned int seed = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int x = threadIdx.x + blockIdx.x * blockDim.x;
   x ^= x << 13;
   x ^= x >> 17;
   x ^= x << 5;
@@ -21,6 +21,7 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
   // typewriter update
   int i = threadIdx.x;
   // for (unsigned int i = 0; i < L; ++i) {
+  if (i >= L) return;
   for (unsigned int j = 0; j < L; ++j) {
     int spin_old = get_value(d_grid, pitch, i, j);
     int spin_new = (-1) * spin_old;
@@ -51,13 +52,15 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
     unsigned int rand_int = xor128();
     float p = (rand_int & 0xFFFF) / 65535.0f;
     if (i == 4) {
-      printf("p: %d\n", p);
+      printf("p: %f\n", p);
       printf("delta_E: %d\n", delta_E);
     }
 
     if (delta_E <= 0 || p <= __expf(-delta_E / temp)) {
 
+    if (i == 4) {
       printf("HOLA@\n");
+    }
       int *grid_i_j = (int *)((char *)d_grid + i * pitch) + j;
       *grid_i_j = spin_new;
     }
