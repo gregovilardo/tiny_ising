@@ -91,11 +91,14 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
   }
 }
 
-static void init(int grid[L][L]) {
-  for (unsigned int i = 0; i < L; ++i) {
-    for (unsigned int j = 0; j < L; ++j) {
-      grid[i][j] = 1;
-    }
+__global__ static void init(int *d_grid, size_t pitch) {
+  // for (unsigned int i = 0; i < L; ++i) {
+  int i = threadIdx.x;
+  if (i >= L)
+    return;
+  for (unsigned int j = 0; j < L; ++j) {
+    int *grid_i_j = (int *)((char *)d_grid + i * pitch) + j;
+    *grid_i_j = 1;
   }
 }
 
@@ -149,8 +152,8 @@ int main(void) {
   // T* pElement = (T*)((char*)BaseAddress + Row * pitch) + Column;
 
   // 2. Initialize to 0 (optional)
-  gpuErrchk(cudaMemset2D(d_grid, pitch, 1, L * sizeof(int), L));
-  // init(grid);
+  gpuErrchk(cudaMemset2D(d_grid, pitch, 0, L * sizeof(int), L));
+  init<<<1, 1024>>>(d_grid);
 
   // dim3 blocks(1, 1);
   // dim3 threads(L, L);
