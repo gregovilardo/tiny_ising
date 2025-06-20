@@ -52,6 +52,8 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
       update<<<1, 1024>>>(temp, d_grid, pitch);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
     }
 
     // measurement phase
@@ -59,10 +61,14 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
       update<<<1, 1024>>>(temp, d_grid, pitch);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
       if (j % calc_step == 0) {
         double energy = 0.0, mag = 0.0;
         int M_max = 0;
         calculate<<<1, 1024>>>(d_grid, pitch, &M_max, &energy);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
         mag = abs(M_max) / (float)N;
         e += energy;
         e2 += energy * energy;
@@ -137,13 +143,13 @@ int main(void) {
   // device and returns in *devPtr a pointer to the allocated memory.
   // The pitch returned in *pitch by cudaMallocPitch() is the width in bytes of
   // the allocation
-  cudaMallocPitch((void **)&d_grid, &pitch, L * sizeof(int), L);
+  gpuErrchk(cudaMallocPitch((void **)&d_grid, &pitch, L * sizeof(int), L));
   // Given the row and column of an array element of type T, the address is
   // computed as:
   // T* pElement = (T*)((char*)BaseAddress + Row * pitch) + Column;
 
   // 2. Initialize to 0 (optional)
-  cudaMemset2D(d_grid, pitch, 1, L * sizeof(int), L);
+  gpuErrchk(cudaMemset2D(d_grid, pitch, 1, L * sizeof(int), L));
   // init(grid);
 
   // dim3 blocks(1, 1);
