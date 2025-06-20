@@ -34,12 +34,6 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
 
     int h_before = -(spin_old * spin_n) - (spin_old * spin_e) -
                    (spin_old * spin_w) - (spin_old * spin_s);
-    if (i == 4) {
-      printf("spin_n: %d\n", spin_n);
-      printf("spin_s: %d\n", spin_s);
-      printf("spin_e: %d\n", spin_e);
-      printf("spin_w: %d\n", spin_w);
-    }
 
     // h after taking new spin
     int h_after = -(spin_new * spin_n) - (spin_new * spin_e) -
@@ -51,16 +45,16 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
     // int frame_seed = 0x912; // TODO: changue this
     unsigned int rand_int = xor128();
     float p = (rand_int & 0xFFFF) / 65535.0f;
-    if (i == 4) {
-      printf("p: %f\n", p);
-      printf("delta_E: %d\n", delta_E);
-    }
+  //  if (i == 4) {
+  //    printf("p: %f\n", p);
+  //    printf("delta_E: %d\n", delta_E);
+  //  }
 
     if (delta_E <= 0 || p <= __expf(-delta_E / temp)) {
 
-    if (i == 4) {
-      printf("HOLA@\n");
-    }
+  //  if (i == 4) {
+  //    printf("HOLA@\n");
+  //  }
       int *grid_i_j = (int *)((char *)d_grid + i * pitch) + j;
       *grid_i_j = spin_new;
     }
@@ -68,9 +62,11 @@ __global__ void update(const float temp, int *d_grid, size_t pitch) {
 }
 
 __global__ void calculate(int *d_grid, size_t pitch, int *M_max, double *E) {
-  *E = 0;
   int i = threadIdx.x;
+  double d_E = 0;
+  int d_M_max = 0;
   // for (unsigned int i = 0; i < L; ++i) {
+  if (i >= L) return;
   for (unsigned int j = 0; j < L; ++j) {
     int spin = get_value(d_grid, pitch, i, j);
     int spin_n = get_value(d_grid, pitch, (i + L - 1) % L, j);
@@ -78,8 +74,16 @@ __global__ void calculate(int *d_grid, size_t pitch, int *M_max, double *E) {
     int spin_w = get_value(d_grid, pitch, i, (j + L - 1) % L);
     int spin_s = get_value(d_grid, pitch, (i + 1) % L, j);
 
-    *E += (spin * spin_n) + (spin * spin_e) + (spin * spin_w) + (spin * spin_s);
-    *M_max += spin;
+      printf("spin_n: %d\n", spin_n);
+      printf("spin_s: %d\n", spin_s);
+      printf("spin_e: %d\n", spin_e);
+      printf("spin_w: %d\n", spin_w);
+
+    d_E += (spin * spin_n) + (spin * spin_e) + (spin * spin_w) + (spin * spin_s);
+    printf("E %lf\n", d_E);
+    d_M_max += spin;
   }
-  *E = *E / 2.0;
+  *M_max = d_M_max;
+  printf("E %lf\n", d_E);
+  *E = d_E / 2.0;
 }

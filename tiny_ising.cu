@@ -51,7 +51,7 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
 
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
-      update<<<1, 1024>>>(temp, d_grid, pitch);
+      update<<<1, 512>>>(temp, d_grid, pitch);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
     }
@@ -60,19 +60,22 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
     unsigned int measurements = 0;
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
-      update<<<1, 1024>>>(temp, d_grid, pitch);
+      update<<<1, 512>>>(temp, d_grid, pitch);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
       if (j % calc_step == 0) {
-        double energy = 0.0, mag = 0.0;
-        int M_max = 0;
-        calculate<<<1, 1024>>>(d_grid, pitch, &M_max, &energy);
+        double mag = 0.0;
+	double *energy;
+        int *M_max;
+gpuErrchk(	cudaMallocManaged(&M_max, sizeof(int)));
+gpuErrchk(	cudaMallocManaged(&energy, sizeof(double)));
+        calculate<<<1, 512>>>(d_grid, pitch, M_max, energy);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
-        mag = abs(M_max) / (float)N;
-        e += energy;
-        e2 += energy * energy;
-        e4 += energy * energy * energy * energy;
+        mag = abs(*M_max) / (float)N;
+        e += *energy;
+        e2 += *energy * *energy;
+        e4 += *energy * *energy * *energy * *energy;
         m += mag;
         m2 += mag * mag;
         m4 += mag * mag * mag * mag;
@@ -153,7 +156,7 @@ int main(void) {
 
   // 2. Initialize to 0 (optional)
   gpuErrchk(cudaMemset2D(d_grid, pitch, 0, L * sizeof(int), L));
-  init<<<1, 1024>>>(d_grid);
+  init<<<1, 512>>>(d_grid, pitch);
 
   // dim3 blocks(1, 1);
   // dim3 threads(L, L);
