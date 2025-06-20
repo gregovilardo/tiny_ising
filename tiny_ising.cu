@@ -8,7 +8,9 @@
  *
  * Debugging: Ezequiel Ferrero
  */
+#include <cuda.h>
 #include <cuda_runtime.h>
+#include <curand_kernel.h>
 #include <device_launch_parameters.h>
 
 #include "ising.h"
@@ -46,12 +48,16 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
   assert((0 < step && min <= max) || (step < 0 && max <= min));
   int modifier = (0 < step) ? 1 : -1;
 
+  curandState *d_state;
+  gpuErrchk(cudaMalloc((void **)&d_state, L * sizeof(curandState)));
+  set_state_curand<<<1, 512>>>(d_state, 1234ULL);
+
   unsigned int index = 0;
   for (double temp = min; modifier * temp <= modifier * max; temp += step) {
 
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
-      update<<<1, 512>>>(temp, d_grid, pitch);
+      update<<<1, 512>>>(temp, d_grid, pitch, d_state);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
     }
@@ -60,15 +66,15 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
     unsigned int measurements = 0;
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
-      update<<<1, 512>>>(temp, d_grid, pitch);
+      update<<<1, 512>>>(temp, d_grid, pitch, d_state);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
       if (j % calc_step == 0) {
         double mag = 0.0;
-	double *energy;
+        double *energy;
         int *M_max;
-gpuErrchk(	cudaMallocManaged(&M_max, sizeof(int)));
-gpuErrchk(	cudaMallocManaged(&energy, sizeof(double)));
+        gpuErrchk(cudaMallocManaged(&M_max, sizeof(int)));
+        gpuErrchk(cudaMallocManaged(&energy, sizeof(double)));
         calculate<<<1, 512>>>(d_grid, pitch, M_max, energy);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());

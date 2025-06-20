@@ -10,6 +10,7 @@
  */
 
 #include <cuda_runtime.h>
+#include <curand_kernel.h>
 #include <device_launch_parameters.h>
 
 #include "colormap.h"
@@ -46,11 +47,16 @@ static void draw(gl2d_t gl2d, float t_now, float t_min, float t_max,
   float color[3];
   colormap_rgbf(COLORMAP_VIRIDIS, t_now, t_min, t_max, &color[0], &color[1],
                 &color[2]);
+
+  int *h_grid = (int *)malloc(L * L * sizeof(int));
+
+  gpuErrchk(cudaMemcpy2D(h_grid, L * sizeof(int), d_grid, pitch,
+                         L * sizeof(int), L, cudaMemcpyDeviceToHost));
+
   for (int i = 0; i < L; ++i) {
     memset(row, 0, sizeof(row));
     for (int j = 0; j < L; ++j) {
-      // T* pElement = (T*)((char*)BaseAddress + Row * pitch) + Column;
-      int g = *((int *)((char *)d_grid + i * pitch) + j);
+      int g = h_grid[i * L + j];
       if (g > 0) {
         row[j * 3] = color[0];
         row[j * 3 + 1] = color[1];
@@ -63,26 +69,33 @@ static void draw(gl2d_t gl2d, float t_now, float t_min, float t_max,
 }
 
 static void cycle(gl2d_t gl2d, const double initial, const double final,
-                  const double step, int *d_grid, size_t pitch) {
+                  const double step, int *d_grid, size_t pitch,
+                  curandState *d_state) {
   assert((0 < step && initial <= final) || (step < 0 && final <= initial));
+
   int modifier = (0 < step) ? 1 : -1;
 
   for (double temp = initial; modifier * temp <= modifier * final;
        temp += step) {
     printf("Temp: %f\n", temp);
     for (unsigned int j = 0; j < TRAN + TMAX; ++j) {
-      update<<<1, 1024>>>(temp, d_grid, pitch);
+      update<<<1, 512>>>(temp, d_grid, pitch, d_state);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
       draw(gl2d, temp, initial < final ? initial : final,
            initial < final ? final : initial, d_grid, pitch);
     }
   }
 }
 
-static void init(int grid[L][L]) {
-  for (unsigned int i = 0; i < L; ++i) {
-    for (unsigned int j = 0; j < L; ++j) {
-      grid[i][j] = (rand() / (float)RAND_MAX) < 0.5f ? -1 : 1;
-    }
+__global__ static void init(int *d_grid, size_t pitch, curandState *d_state) {
+  // for (unsigned int i = 0; i < L; ++i) {
+  int i = threadIdx.x;
+  if (i >= L)
+    return;
+  for (unsigned int j = 0; j < L; ++j) {
+    int *grid_i_j = (int *)((char *)d_grid + i * pitch) + j;
+    *grid_i_j = curand_uniform(&d_state[i]) < 0.5f ? -1 : 1;
   }
 }
 
@@ -117,11 +130,17 @@ int main(void) {
   // clear the grid
   int *d_grid;
   size_t pitch;
-  cudaMallocPitch((void **)&d_grid, &pitch, L * sizeof(int), L);
-  cudaMemset2D(d_grid, pitch, 0, L * sizeof(int), L);
+  gpuErrchk(cudaMallocPitch((void **)&d_grid, &pitch, L * sizeof(int), L));
+  gpuErrchk(cudaMemset2D(d_grid, pitch, 0, L * sizeof(int), L));
+
+  curandState *d_state;
+  gpuErrchk(cudaMalloc((void **)&d_state, L * sizeof(curandState)));
+  set_state_curand<<<1, 512>>>(d_state, 1234ULL);
+
+  init<<<1, 512>>>(d_grid, pitch, d_state);
 
   // temperature increasing cycle
-  cycle(gl2d, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, d_grid, pitch);
+  cycle(gl2d, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, d_grid, pitch, d_state);
 
   // stop timer
   double elapsed = wtime() - start;
