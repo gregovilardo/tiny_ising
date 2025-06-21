@@ -11,13 +11,17 @@ __device__ inline int get_value(int *d_grid, size_t pitch, int i, int j) {
 }
 
 __global__ void update(const float temp, int *d_grid, size_t pitch,
-                       curandState *d_state) {
+                       curandState *d_state, bool is_black) {
   // typewriter update
   int i = threadIdx.x;
   // for (unsigned int i = 0; i < L; ++i) {
   if (i >= L)
     return;
   for (unsigned int j = 0; j < L; ++j) {
+    bool site_is_black = (i + j) % 2;
+    if (site_is_black != is_black)
+      continue;
+
     int spin_old = get_value(d_grid, pitch, i, j);
     int spin_new = (-1) * spin_old;
 
@@ -45,6 +49,7 @@ __global__ void update(const float temp, int *d_grid, size_t pitch,
   }
 }
 
+// TODO: Calcular con bloques
 __global__ void calculate(int *d_grid, size_t pitch, int *M_max, double *E) {
   int i = threadIdx.x;
   double d_E = 0;

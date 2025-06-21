@@ -29,6 +29,7 @@
 #define MAXFPS 60
 #define N (L * L)         // system size
 #define SEED (time(NULL)) // random seed
+#define threadsPerBlock 1024
 
 /**
  * GL output
@@ -79,7 +80,10 @@ static void cycle(gl2d_t gl2d, const double initial, const double final,
        temp += step) {
     printf("Temp: %f\n", temp);
     for (unsigned int j = 0; j < TRAN + TMAX; ++j) {
-      update<<<1, 512>>>(temp, d_grid, pitch, d_state);
+      update<<<1, threadsPerBlock>>>(temp, d_grid, pitch, d_state, 0);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+      update<<<1, threadsPerBlock>>>(temp, d_grid, pitch, d_state, 1);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
       draw(gl2d, temp, initial < final ? initial : final,
@@ -135,9 +139,9 @@ int main(void) {
 
   curandState *d_state;
   gpuErrchk(cudaMalloc((void **)&d_state, L * sizeof(curandState)));
-  set_state_curand<<<1, 512>>>(d_state, 1234ULL);
+  set_state_curand<<<1, threadsPerBlock>>>(d_state, 1234ULL);
 
-  init<<<1, 512>>>(d_grid, pitch, d_state);
+  init<<<1, threadsPerBlock>>>(d_grid, pitch, d_state);
 
   // temperature increasing cycle
   cycle(gl2d, TEMP_INITIAL, TEMP_FINAL, TEMP_DELTA, d_grid, pitch, d_state);

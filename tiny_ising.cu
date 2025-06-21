@@ -29,6 +29,8 @@
 #define NPOINTS (1 + (int)((TEMP_FINAL - TEMP_INITIAL) / TEMP_DELTA))
 #define N (L * L)         // system size
 #define SEED (time(NULL)) // random seed
+#define threadsPerBlock 256
+#define numBlocks 4
 
 // temperature, E, E^2, E^4, M, M^2, M^4
 struct statpoint {
@@ -50,14 +52,17 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
 
   curandState *d_state;
   gpuErrchk(cudaMalloc((void **)&d_state, L * sizeof(curandState)));
-  set_state_curand<<<1, 512>>>(d_state, 1234ULL);
+  set_state_curand<<<1, threadsPerBlock>>>(d_state, 1234ULL);
 
   unsigned int index = 0;
   for (double temp = min; modifier * temp <= modifier * max; temp += step) {
 
     // equilibrium phase
     for (unsigned int j = 0; j < TRAN; ++j) {
-      update<<<1, 512>>>(temp, d_grid, pitch, d_state);
+      update<<<numBlocks, threadsPerBlock>>>(temp, d_grid, pitch, d_state, 0);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+      update<<<numBlocks, threadsPerBlock>>>(temp, d_grid, pitch, d_state, 1);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
     }
@@ -66,7 +71,10 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
     unsigned int measurements = 0;
     double e = 0.0, e2 = 0.0, e4 = 0.0, m = 0.0, m2 = 0.0, m4 = 0.0;
     for (unsigned int j = 0; j < TMAX; ++j) {
-      update<<<1, 512>>>(temp, d_grid, pitch, d_state);
+      update<<<numBlocks, threadsPerBlock>>>(temp, d_grid, pitch, d_state, 0);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+      update<<<numBlocks, threadsPerBlock>>>(temp, d_grid, pitch, d_state, 1);
       gpuErrchk(cudaPeekAtLastError());
       gpuErrchk(cudaDeviceSynchronize());
       if (j % calc_step == 0) {
@@ -75,7 +83,7 @@ static void cycle(int *d_grid, size_t pitch, const double min, const double max,
         int *M_max;
         gpuErrchk(cudaMallocManaged(&M_max, sizeof(int)));
         gpuErrchk(cudaMallocManaged(&energy, sizeof(double)));
-        calculate<<<1, 512>>>(d_grid, pitch, M_max, energy);
+        calculate<<<numBlocks, threadsPerBlock>>>(d_grid, pitch, M_max, energy);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
         mag = abs(*M_max) / (float)N;
@@ -162,7 +170,7 @@ int main(void) {
 
   // 2. Initialize to 0 (optional)
   gpuErrchk(cudaMemset2D(d_grid, pitch, 0, L * sizeof(int), L));
-  init<<<1, 512>>>(d_grid, pitch);
+  init<<<numBlocks, threadsPerBlock>>>(d_grid, pitch);
 
   // dim3 blocks(1, 1);
   // dim3 threads(L, L);

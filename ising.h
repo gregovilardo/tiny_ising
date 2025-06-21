@@ -27,5 +27,5 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
 }
 
 __global__ void update(const float temp, int *d_grid, size_t pitch,
-                       curandState *d_state);
+                       curandState *d_state, bool is_black);
 __global__ void calculate(int *d_grid, size_t pitch, int *M_max, double *E);
